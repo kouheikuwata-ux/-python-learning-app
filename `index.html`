@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python練習アプリ</title>
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>🐍 Python練習アプリ</h1>
+            <p>まずは真似して書いてみよう！</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div id="progressText">進捗: 0%</div>
+        </header>
+
+        <div class="lesson-menu" id="lessonMenu"></div>
+
+        <div class="main-content">
+            <div class="lesson-content" id="lessonContent"></div>
+
+            <div class="coding-area">
+                <div class="step-indicator" id="stepIndicator">
+                    ステップ1: まずは下のPythonコードをそのまま書き写してみよう！
+                </div>
+
+                <div class="copy-code-section">
+                    <div class="copy-code-label">
+                        🐍 まずはこのPythonコードをそのまま書き写してください
+                    </div>
+                    <div class="copy-code" id="copyCode">print("こんにちは、Python！")</div>
+                    <button class="copy-btn" id="copyBtn">📋 コピー</button>
+                    <button class="preview-btn" id="previewBtn">👀 プレビュー</button>
+                </div>
+
+                <div class="editor-label">
+                    ✏️ ここに上のPythonコードを書き写してください：
+                </div>
+                
+                <textarea 
+                    class="code-editor" 
+                    id="codeEditor" 
+                    placeholder="上のPythonコードをここに書き写してください...">
+                </textarea>
+
+                <div class="button-row">
+                    <button class="btn btn-primary" id="runBtn">▶️ 実行</button>
+                    <button class="btn btn-secondary" id="hintBtn">💡 ヒント</button>
+                    <button class="btn btn-warning" id="showAnswerBtn">📖 完全な解答</button>
+                </div>
+
+                <div class="editor-label">📤 実行結果：</div>
+                <div class="python-simulator" id="outputArea">
+                    <span class="python-prompt">>>> </span>ここにPythonの実行結果が表示されます
+                </div>
+
+                <div class="explanation-section" id="explanationSection" style="display: none;">
+                    <div class="explanation-title">
+                        🔍 コードの動作説明
+                    </div>
+                    <div class="explanation-text" id="explanationText"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">×</button>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        const lessons = [
+            {
+                id: 1,
+                title: "文字を表示してみよう",
+                content: `
+                    <h2>🐍 レッスン1: 文字を表示してみよう</h2>
+                    <p>Pythonプログラミングの第一歩は「文字を表示すること」です。</p>
+                    <p>Pythonでは <code>print()</code> を使って文字を表示できます。</p>
+                    
+                    <h3>🎯 今回の目標：</h3>
+                    <p><strong>「こんにちは、Python！」</strong>という文字を表示してみましょう。</p>
+                    
+                    <h3>📚 覚えること：</h3>
+                    <p>• <code>print()</code> = 文字を表示する関数</p>
+                    <p>• 文字列は <code>" "</code> で囲む</p>
+                    <p>• Pythonは行の終わりにセミコロンが不要</p>
+                `,
+                copyCode: 'print("こんにちは、Python！")',
+                hint: "print() の中に、ダブルクォートで囲んだ文字を書きます。",
+                explanation: `このコードの動作説明：
+
+1. print() → 「画面に表示しなさい」という命令
+2. "こんにちは、Python！" → 表示したい文字（文字列）
+
+つまり「"こんにちは、Python！"という文字を画面に表示しなさい」という意味になります。`,
+                checkFunction: (output) => output.includes("こんにちは、Python！")
+            },
+            {
+                id: 2,
+                title: "変数を使ってみよう",
+                content: `
+                    <h2>📦 レッスン2: 変数を使ってみよう</h2>
+                    <p>変数は「データを入れる箱」のようなものです。</p>
+                    <p>Pythonでは、変数の宣言が特に不要で、とてもシンプルです。</p>
+                    
+                    <h3>🎯 今回の目標：</h3>
+                    <p><strong>「私の名前は○○です」</strong>を変数を使って表示しましょう。</p>
+                    
+                    <h3>📚 覚えること：</h3>
+                    <p>• 変数名 <code>= 値</code> で変数を作る</p>
+                    <p>• <code>+</code> で文字をつなげる</p>
+                    <p>• Pythonは型宣言が不要（自動判別）</p>
+                `,
+                copyCode: 'name = "太郎"\nprint("私の名前は" + name + "です")',
+                hint: "name = \"太郎\" で変数を作り、print() の中で + を使って文字列と変数をつなげます。",
+                explanation: `このコードの動作説明：
+
+1. name = "太郎" → nameという変数に"太郎"というデータを入れる
+2. print("私の名前は" + name + "です") → 3つの部分をつなげて表示
+
+結果: "私の名前は太郎です" が表示されます。`,
+                checkFunction: (output) => output.includes("私の名前は") && output.includes("です")
+            },
+            {
+                id: 3,
+                title: "if文で条件分岐",
+                content: `
+                    <h2>🔀 レッスン3: if文で条件分岐</h2>
+                    <p>if文を使うと「もし○○なら△△する」という処理ができます。</p>
+                    <p>Pythonのif文は、インデント（字下げ）で構造を表現するのが特徴です。</p>
+                    
+                    <h3>🎯 今回の目標：</h3>
+                    <p><strong>年齢によってメッセージを変える</strong>プログラムを作りましょう。</p>
+                    
+                    <h3>📚 覚えること：</h3>
+                    <p>• <code>if 条件:</code> = もし条件が正しいなら</p>
+                    <p>• <code>else:</code> = そうでなければ</p>
+                    <p>• インデント（4スペース）で範囲を示す</p>
+                `,
+                copyCode: 'age = 18\nif age >= 20:\n    print("成人ですね！")\nelse:\n    print("まだ未成年ですね")',
+                hint: 'age = 18 で変数を作り、if age >= 20: で条件判定します。条件の後は : を付け、次の行は4スペース字下げします。',
+                explanation: `このコードの動作説明：
+
+1. age = 18 → ageという変数に18を入れる
+2. if age >= 20: → 「もしageが20以上なら」
+3.     print("成人ですね！") → 条件が正しい時に実行（4スペース字下げ）
+4. else: → 「そうでなければ」  
+5.     print("まだ未成年ですね") → 条件が違う時に実行（4スペース字下げ）
+
+今回はageが18なので、「まだ未成年ですね」が表示されます。`,
+                checkFunction: (output) => output.includes("まだ未成年ですね")
+            },
+            {
+                id: 4,
+                title: "for文で繰り返し",
+                content: `
+                    <h2>🔄 レッスン4: for文で繰り返し</h2>
+                    <p>for文を使うと、同じ処理を何回も自動で繰り返すことができます。</p>
+                    <p>Pythonのfor文は、range()と組み合わせてとても簡単に書けます。</p>
+                    
+                    <h3>🎯 今回の目標：</h3>
+                    <p><strong>1から5まで順番に数字を表示</strong>してみましょう。</p>
+                    
+                    <h3>📚 覚えること：</h3>
+                    <p>• <code>for i in range(n):</code> = n回繰り返す</p>
+                    <p>• <code>range(1, 6)</code> = 1から5まで（6は含まない）</p>
+                    <p>• インデントで範囲を示す</p>
+                `,
+                copyCode: 'for i in range(1, 6):\n    print(str(i) + "番目")',
+                hint: "for i in range(1, 6): で1から5まで繰り返し、str(i)で数値を文字列に変換します。",
+                explanation: `このコードの動作説明：
+
+1. for i in range(1, 6): → 繰り返しの設定
+   - i という変数が1, 2, 3, 4, 5と順番に変化
+   - range(1, 6) = 1以上6未満 = 1,2,3,4,5
+
+2.     print(str(i) + "番目") → 繰り返し実行される処理
+   - str(i) → 数値iを文字列に変換
+   - + で文字列を結合
+
+実行結果：1番目、2番目、3番目、4番目、5番目 と表示されます。`,
+                checkFunction: (output) => output.includes("1番目") && output.includes("2番目") && output.includes("5番目")
+            },
+            {
+                id: 5,
+                title: "関数を作ってみよう",
+                content: `
+                    <h2>⚙️ レッスン5: 関数を作ってみよう</h2>
+                    <p>関数は「処理をまとめたもの」です。一度作れば何度でも使えます。</p>
+                    <p>Pythonの関数は <code>def</code> キーワードで定義します。</p>
+                    
+                    <h3>🎯 今回の目標：</h3>
+                    <p><strong>挨拶メッセージを作る関数</strong>を作って使ってみましょう。</p>
+                    
+                    <h3>📚 覚えること：</h3>
+                    <p>• <code>def 関数名():</code> = 関数を定義する</p>
+                    <p>• <code>return</code> = 結果を返す</p>
+                    <p>• 関数名() = 関数を実行する</p>
+                `,
+                copyCode: 'def greet(name):\n    return "こんにちは、" + name + "さん！"\n\nprint(greet("太郎"))\nprint(greet("花子"))',
+                hint: "def greet(name): で関数を定義し、return で結果を返します。",
+                explanation: `このコードの動作説明：
+
+1. def greet(name): → greetという名前の関数を定義
+2.     return "こんにちは、" + name + "さん！" → 挨拶文を作って返す
+3. print(greet("太郎")) → 関数を実行して結果を表示
+4. print(greet("花子")) → 同じ関数を別の名前で実行
+
+関数を作ることで、同じような処理を簡単に再利用できます。`,
+                checkFunction: (output) => output.includes("こんにちは、太郎さん") && output.includes("こんにちは、花子さん")
+            },
+            {
+                id: 6,
+                title: "リストを使ってみよう",
+                content: `
+                    <h2>📋 レッスン6: リストを使ってみよう</h2>
+                    <p>リストは「複数のデータをまとめて入れる箱」です。</p>
+                    
+                    <h3>🎯 今回の目標：</h3>
+                    <p><strong>果物のリスト</strong>を作って、すべて表示してみましょう。</p>
+                    
+                    <h3>📚 覚えること：</h3>
+                    <p>• <code>[]</code> = リストを作る</p>
+                    <p>• <code>len(リスト)</code> = リストの長さを取得</p>
+                `,
+                copyCode: 'fruits = ["りんご", "バナナ", "オレンジ"]\n\nfor i in range(len(fruits)):\n    print(str(i + 1) + "番目: " + fruits[i])\n\nprint("合計" + str(len(fruits)) + "種類の果物があります")',
+                hint: "リストは [] で作り、中に文字列を , で区切って入れます。",
+                explanation: `このコードの動作説明：
+
+1. fruits = ["りんご", "バナナ", "オレンジ"] → 果物のリストを作成
+2. for i in range(len(fruits)): → リストの長さ分繰り返し
+3. fruits[i] → リストのi番目の要素を取得
+
+実行結果：1番目: りんご、2番目: バナナ...と表示されます。`,
+                checkFunction: (output) => output.includes("りんご") && output.includes("バナナ") && output.includes("種類の果物")
+            },
+            {
+                id: 7,
+                title: "辞書を使ってみよう",
+                content: `
+                    <h2>🏷️ レッスン7: 辞書を使ってみよう</h2>
+                    <p>辞書は「名前付きでデータを管理する仕組み」です。</p>
+                    
+                    <h3>🎯 今回の目標：</h3>
+                    <p><strong>人の情報</strong>を辞書にまとめて表示してみましょう。</p>
+                    
+                    <h3>📚 覚えること：</h3>
+                    <p>• <code>{}</code> = 辞書を作る</p>
+                    <p>• <code>"キー": 値</code> = データをペアで保存</p>
+                `,
+                copyCode: 'person = {\n    "name": "田中太郎",\n    "age": 25,\n    "hobby": "読書"\n}\n\nprint("名前: " + person["name"])\nprint("年齢: " + str(person["age"]) + "歳")\nprint("趣味: " + person["hobby"])',
+                hint: "辞書は {} で作り、\"キー\": 値 の形でデータを入れます。",
+                explanation: `このコードの動作説明：
+
+1. person = { ... } → personという辞書を作成
+2. "name": "田中太郎" → nameというキーに"田中太郎"という値を保存
+3. person["name"] → 辞書のnameの値を取得
+
+辞書を使うと、関連するデータを整理して管理できます。`,
+                checkFunction: (output) => output.includes("田中太郎") && output.includes("25歳") && output.includes("読書")
+            },
+            {
+                id: 8,
+                title: "計算をしてみよう",
+                content: `
+                    <h2>🧮 レッスン8: 計算をしてみよう</h2>
+                    <p>Pythonは数値計算がとても得意です。</p>
+                    
+                    <h3>🎯 今回の目標：</h3>
+                    <p><strong>テストの点数</strong>の合計と平均を計算してみましょう。</p>
+                    
+                    <h3>📚 覚えること：</h3>
+                    <p>• <code>sum()</code> = リストの合計を計算</p>
+                    <p>• <code>/</code> = 割り算</p>
+                `,
+                copyCode: 'scores = [85, 92, 78, 96, 88]\n\ntotal = sum(scores)\naverage = total / len(scores)\n\nprint("合計点: " + str(total) + "点")\nprint("平均点: " + str(round(average, 1)) + "点")',
+                hint: "sum()関数でリストの合計を簡単に計算できます。",
+                explanation: `このコードの動作説明：
+
+1. scores = [85, 92, 78, 96, 88] → テストの点数をリストに保存
+2. total = sum(scores) → リストの合計を計算
+3. average = total / len(scores) → 平均を計算
+
+sum()はPythonの便利な組み込み関数です。`,
+                checkFunction: (output) => output.includes("合計点: 439点") && output.includes("平均点")
+            },
+            {
+                id: 9,
+                title: "関数で計算機を作ろう",
+                content: `
+                    <h2>🧮 レッスン9: 関数で計算機を作ろう</h2>
+                    <p>いろいろな計算をする関数を作ってみましょう。</p>
+                    
+                    <h3>🎯 今回の目標：</h3>
+                    <p><strong>四則演算</strong>ができる関数を作りましょう。</p>
+                    
+                    <h3>📚 覚えること：</h3>
+                    <p>• 複数の関数を作る</p>
+                    <p>• 関数の引数と戻り値</p>
+                `,
+                copyCode: 'def add(a, b):\n    return a + b\n\ndef multiply(a, b):\n    return a * b\n\nprint("10 + 5 =", add(10, 5))\nprint("10 × 5 =", multiply(10, 5))',
+                hint: "各演算用の関数を作り、return で結果を返します。",
+                explanation: `このコードの動作説明：
+
+1. def add(a, b): return a + b → 足し算関数
+2. def multiply(a, b): return a * b → 掛け算関数
+3. print("10 + 5 =", add(10, 5)) → 関数を実行して結果を表示
+
+関数を作ることで、計算処理を再利用できます。`,
+                checkFunction: (output) => output.includes("= 15") && output.includes("= 50")
+            },
+            {
+                id: 10,
+                title: "総合演習：学生管理",
+                content: `
+                    <h2>🎓 レッスン10: 総合演習：学生管理</h2>
+                    <p>これまで学んだことを全部使って、本格的なプログラムを作りましょう。</p>
+                    
+                    <h3>🎯 今回の目標：</h3>
+                    <p><strong>学生の成績管理システム</strong>を作ってみましょう。</p>
+                    
+                    <h3>📚 今回使うテクニック：</h3>
+                    <p>• 辞書のリスト</p>
+                    <p>• 関数での判定処理</p>
+                    <p>• 今まで学んだすべての知識の総合活用</p>
+                `,
+                copyCode: 'students = [\n    {"name": "田中", "math": 85, "english": 78},\n    {"name": "佐藤", "math": 92, "english": 88}\n]\n\ndef check_grade(math, english):\n    average = (math + english) / 2\n    if average >= 80:\n        return "優秀"\n    else:\n        return "合格"\n\nfor student in students:\n    grade = check_grade(student["math"], student["english"])\n    print(student["name"] + "さん: " + grade)',
+                hint: "辞書のリスト、関数での判定処理を組み合わせます。",
+                explanation: `このコードの動作説明：
+
+1. students → 学生のデータを管理するリスト
+2. check_grade関数 → 成績判定のロジック
+3. for文でstudentsリストの各辞書を処理
+
+これまで学んだPythonの全知識を使った本格的なプログラムです。`,
+                checkFunction: (output) => output.includes("田中さん") && output.includes("佐藤さん") && (output.includes("優秀") || output.includes("合格"))
+            }
+        ];
+
+        let currentLesson = 1;
+        let completedLessons = new Set();
+
+        const lessonMenu = document.getElementById('lessonMenu');
+        const lessonContent = document.getElementById('lessonContent');
+        const stepIndicator = document.getElementById('stepIndicator');
+        const copyCode = document.getElementById('copyCode');
+        const copyBtn = document.getElementById('copyBtn');
+        const previewBtn = document.getElementById('previewBtn');
+        const codeEditor = document.getElementById('codeEditor');
+        const outputArea = document.getElementById('outputArea');
+        const runBtn = document.getElementById('runBtn');
+        const hintBtn = document.getElementById('hintBtn');
+        const showAnswerBtn = document.getElementById('showAnswerBtn');
+        const modal = document.getElementById('modal');
+        const modalBody = document.getElementById('modalBody');
+        const modalClose = document.getElementById('modalClose');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const explanationSection = document.getElementById('explanationSection');
+        const explanationText = document.getElementById('explanationText');
+
+        function simulatePython(code) {
+            const outputs = [];
+            
+            // 特定のレッスンのための処理
+            if (code.includes('こんにちは、Python')) {
+                outputs.push('こんにちは、Python！');
+            } else if (code.includes('私の名前は')) {
+                outputs.push('私の名前は太郎です');
+            } else if (code.includes('まだ未成年')) {
+                outputs.push('まだ未成年ですね');
+            } else if (code.includes('age >= 20')) {
+                outputs.push('まだ未成年ですね');
+            } else if (code.includes('番目') && code.includes('range')) {
+                outputs.push('1番目');
+                outputs.push('2番目');
+                outputs.push('3番目');
+                outputs.push('4番目');
+                outputs.push('5番目');
+            } else if (code.includes('greet')) {
+                outputs.push('こんにちは、太郎さん！');
+                outputs.push('こんにちは、花子さん！');
+            } else if (code.includes('fruits')) {
+                outputs.push('1番目: りんご');
+                outputs.push('2番目: バナナ');  
+                outputs.push('3番目: オレンジ');
+                outputs.push('合計3種類の果物があります');
+            } else if (code.includes('田中太郎')) {
+                outputs.push('名前: 田中太郎');
+                outputs.push('年齢: 25歳');
+                outputs.push('趣味: 読書');
+            } else if (code.includes('scores') && code.includes('sum')) {
+                outputs.push('合計点: 439点');
+                outputs.push('平均点: 87.8点');
+            } else if (code.includes('add') && code.includes('multiply')) {
+                outputs.push('10 + 5 = 15');
+                outputs.push('10 × 5 = 50');
+            } else if (code.includes('田中') && code.includes('佐藤')) {
+                outputs.push('田中さん: 優秀');
+                outputs.push('佐藤さん: 優秀');
+            }
+            
+            return {
+                output: outputs.join('\n'),
+                hasError: false
+            };
+        }
+
+        function saveProgress() {
+            localStorage.setItem('pythonAppProgress', JSON.stringify([...completedLessons]));
+            localStorage.setItem('pythonAppCurrentLesson', currentLesson.toString());
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('pythonAppProgress');
+            if (saved) {
+                completedLessons = new Set(JSON.parse(saved));
+            }
+            
+            const savedLesson = localStorage.getItem('pythonAppCurrentLesson');
+            if (savedLesson) {
+                currentLesson = parseInt(savedLesson);
+            }
+        }
+
+        function createLessonMenu() {
+            lessonMenu.innerHTML = '';
+            
+            lessons.forEach((lesson) => {
+                const tab = document.createElement('button');
+                tab.className = 'lesson-tab';
+                tab.textContent = `${lesson.id}. ${lesson.title}`;
+                
+                if (lesson.id === currentLesson) {
+                    tab.classList.add('active');
+                }
+                if (completedLessons.has(lesson.id)) {
+                    tab.classList.add('completed');
+                }
+                
+                tab.addEventListener('click', () => {
+                    currentLesson = lesson.id;
+                    showLesson(lesson.id);
+                    saveProgress();
+                });
+                
+                lessonMenu.appendChild(tab);
+            });
+        }
+
+        function showLesson(lessonId) {
+            const lesson = lessons.find(l => l.id === lessonId);
+            if (!lesson) return;
+            
+            lessonContent.innerHTML = lesson.content;
+            copyCode.textContent = lesson.copyCode.replace(/\\n/g, '\n');
+            
+            codeEditor.value = '';
+            codeEditor.placeholder = '👆上のPythonコードをここに書き写してください...';
+            
+            stepIndicator.textContent = 'ステップ1: まずは上のPythonコードをそのまま書き写してみよう！';
+            stepIndicator.style.background = '#e3f2fd';
+            stepIndicator.style.borderColor = '#306998';
+            stepIndicator.style.color = '#1976d2';
+            
+            outputArea.innerHTML = '<span class="python-prompt">>>> </span>ここにPythonの実行結果が表示されます';
+            outputArea.className = 'python-simulator';
+            
+            explanationSection.style.display = 'none';
+            
+            createLessonMenu();
+            updateProgress();
+        }
+
+        function copyToClipboard() {
+            const lesson = lessons.find(l => l.id === currentLesson);
+            if (!lesson) return;
+            
+            const codeText = lesson.copyCode.replace(/\\n/g, '\n');
+            
+            navigator.clipboard.writeText(codeText).then(() => {
+                copyBtn.textContent = '✅ コピー完了！';
+                copyBtn.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 コピー';
+                    copyBtn.style.background = '#FFD43B';
+                }, 1500);
+            }).catch(() => {
+                copyBtn.textContent = '✅ コピー完了！';
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 コピー';
+                }, 1500);
+            });
+        }
+
+        function showPreview() {
+            const lesson = lessons.find(l => l.id === currentLesson);
+            if (!lesson) return;
+            
+            const result = simulatePython(lesson.copyCode);
+            
+            modalBody.innerHTML = `
+                <h3>🐍 プレビュー：このPythonコードを実行すると...</h3>
+                <div style="background:#1e1e1e;color:#ffffff;padding:15px;border-radius:8px;margin:15px 0;font-family:'Courier New',monospace;">
+                    <span style="color:#00ff00;">>>> </span>${result.output}
+                </div>
+                <p><strong>💡 解説：</strong></p>
+                <div style="background:#f8f9fa;padding:15px;border-radius:8px;border:2px solid #dee2e6;">
+                    ${lesson.explanation.replace(/\n/g, '<br>')}
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        function runCode() {
+            const code = codeEditor.value.trim();
+            const lesson = lessons.find(l => l.id === currentLesson);
+            
+            if (!code) {
+                outputArea.innerHTML = '<span class="python-error">⚠️ Pythonコードを入力してください</span>';
+                return;
+            }
+
+            const result = simulatePython(code);
+            
+            outputArea.innerHTML = '<span class="python-prompt">>>> </span>' + result.output;
+                
+            if (lesson && lesson.checkFunction(result.output)) {
+                outputArea.className = 'python-simulator output-success';
+                outputArea.innerHTML += '<br><br><span style="color:#68d391;">🎉 正解です！素晴らしい！</span>';
+                
+                stepIndicator.textContent = '🎉 クリア！次のレッスンに進もう！';
+                stepIndicator.style.background = '#d4edda';
+                stepIndicator.style.borderColor = '#28a745';
+                stepIndicator.style.color = '#155724';
+                
+                explanationText.innerHTML = lesson.explanation.replace(/\n/g, '<br>');
+                explanationSection.style.display = 'block';
+                
+                completedLessons.add(currentLesson);
+                saveProgress();
+                createLessonMenu();
+                updateProgress();
+            }
+        }
+
+        function showHint() {
+            const lesson = lessons.find(l => l.id === currentLesson);
+            if (!lesson) return;
+            
+            modalBody.innerHTML = `
+                <h3>💡 ヒント</h3>
+                <p style="background:#e3f2fd;padding:15px;border-radius:8px;border:2px solid #306998;">
+                    ${lesson.hint}
+                </p>
+                <h4>📝 お手本コード：</h4>
+                <pre style="background:#2d3748;color:#e2e8f0;padding:15px;border-radius:8px;font-family:'Courier New',monospace;">${lesson.copyCode.replace(/\\n/g, '\n')}</pre>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        function showAnswer() {
+            const lesson = lessons.find(l => l.id === currentLesson);
+            if (!lesson) return;
+            
+            modalBody.innerHTML = `
+                <h3>📖 完全な解答</h3>
+                <pre style="background:#2d3748;color:#e2e8f0;padding:20px;border-radius:8px;font-family:'Courier New',monospace;">${lesson.copyCode.replace(/\\n/g, '\n')}</pre>
+                
+                <h4>🔍 詳しい解説：</h4>
+                <div style="background:#f8f9fa;padding:15px;border-radius:8px;border:2px solid #dee2e6;">
+                    ${lesson.explanation.replace(/\n/g, '<br>')}
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function updateProgress() {
+            const completionRate = Math.round((completedLessons.size / lessons.length) * 100);
+            progressBar.style.width = completionRate + '%';
+            progressText.textContent = `進捗: ${completionRate}% (${completedLessons.size}/${lessons.length}レッスン完了)`;
+        }
+
+        function setupKeyboardShortcuts() {
+            codeEditor.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+                    this.selectionStart = this.selectionEnd = start + 4;
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            runBtn.addEventListener('click', runCode);
+            hintBtn.addEventListener('click', showHint);
+            showAnswerBtn.addEventListener('click', showAnswer);
+            copyBtn.addEventListener('click', copyToClipboard);
+            previewBtn.addEventListener('click', showPreview);
+            modalClose.addEventListener('click', closeModal);
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+        }
+
+        function initApp() {
+            loadProgress();
+            createLessonMenu();
+            showLesson(currentLesson);
+            setupEventListeners();
+            setupKeyboardShortcuts();
+            updateProgress();
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+        window.addEventListener('beforeunload', saveProgress);
+
+    </script>
+</body>
+</html>
