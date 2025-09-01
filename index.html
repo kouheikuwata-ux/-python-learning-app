@@ -4,6 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Python練習アプリ</title>
+    
+    <!-- Google Analytics 設定 -->
+    <script src="analytics-config.js"></script>
+    
+    <!-- Google Analytics 4 (GA4) -->
+    <script>
+        // 設定の準備を待つ
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.ANALYTICS_CONFIG && !window.ANALYTICS_CONFIG.DEVELOPMENT_MODE) {
+                // 本番環境でのみGA4スクリプトを読み込む
+                const script = document.createElement('script');
+                script.async = true;
+                script.src = `https://www.googletagmanager.com/gtag/js?id=${window.ANALYTICS_CONFIG.GA_MEASUREMENT_ID}`;
+                document.head.appendChild(script);
+                
+                script.onload = function() {
+                    window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}
+                    window.gtag = gtag;
+                    gtag('js', new Date());
+                    gtag('config', window.ANALYTICS_CONFIG.GA_MEASUREMENT_ID);
+                    console.log('Google Analytics 4 initialized with ID:', window.ANALYTICS_CONFIG.GA_MEASUREMENT_ID);
+                };
+            } else {
+                console.log('Google Analytics disabled in development mode');
+            }
+        });
+    </script>
+    
 <link rel="stylesheet" href="style.css">
 
 </head>
@@ -347,6 +376,21 @@ sum()はPythonの便利な組み込み関数です。`,
 
         let currentLesson = 1;
         let completedLessons = new Set();
+        
+        // Google Analytics イベント追跡関数
+        function trackEvent(eventName, parameters = {}) {
+            const config = window.ANALYTICS_CONFIG;
+            
+            if (config && !config.DEVELOPMENT_MODE && typeof gtag !== 'undefined') {
+                gtag('event', eventName, {
+                    event_category: 'python_learning',
+                    ...parameters
+                });
+                console.log('GA Event tracked:', eventName, parameters);
+            } else {
+                console.log('GA Event (dev mode):', eventName, parameters);
+            }
+        }
 
         const lessonMenu = document.getElementById('lessonMenu');
         const lessonContent = document.getElementById('lessonContent');
@@ -460,6 +504,15 @@ sum()はPythonの便利な組み込み関数です。`,
             const lesson = lessons.find(l => l.id === lessonId);
             if (!lesson) return;
             
+            // 現在のレッスン開始時刻を記録
+            currentLessonStartTime = Date.now();
+            
+            // GA: レッスン開始を追跡
+            trackEvent('lesson_started', {
+                lesson_id: lessonId,
+                lesson_title: lesson.title
+            });
+            
             lessonContent.innerHTML = lesson.content;
             copyCode.textContent = lesson.copyCode.replace(/\\n/g, '\n');
             
@@ -484,6 +537,12 @@ sum()はPythonの便利な組み込み関数です。`,
             const lesson = lessons.find(l => l.id === currentLesson);
             if (!lesson) return;
             
+            // GA: コードコピーを追跡
+            trackEvent('code_copied', {
+                lesson_id: currentLesson,
+                lesson_title: lesson.title
+            });
+            
             const codeText = lesson.copyCode.replace(/\\n/g, '\n');
             
             navigator.clipboard.writeText(codeText).then(() => {
@@ -506,6 +565,12 @@ sum()はPythonの便利な組み込み関数です。`,
             const lesson = lessons.find(l => l.id === currentLesson);
             if (!lesson) return;
             
+            // GA: プレビュー使用を追跡
+            trackEvent('preview_used', {
+                lesson_id: currentLesson,
+                lesson_title: lesson.title
+            });
+            
             const result = simulatePython(lesson.copyCode);
             
             modalBody.innerHTML = `
@@ -526,6 +591,13 @@ sum()はPythonの便利な組み込み関数です。`,
             const code = codeEditor.value.trim();
             const lesson = lessons.find(l => l.id === currentLesson);
             
+            // GA: コード実行を追跡
+            trackEvent('code_executed', {
+                lesson_id: currentLesson,
+                lesson_title: lesson?.title,
+                code_length: code.length
+            });
+            
             if (!code) {
                 outputArea.innerHTML = '<span class="python-error">⚠️ Pythonコードを入力してください</span>';
                 return;
@@ -539,6 +611,14 @@ sum()はPythonの便利な組み込み関数です。`,
                 outputArea.className = 'python-simulator output-success';
                 outputArea.innerHTML += '<br><br><span style="color:#68d391;">🎉 正解です！素晴らしい！</span>';
                 
+                // GA: レッスン完了を追跡（所要時間を含む）
+                const lessonDuration = Math.round((Date.now() - currentLessonStartTime) / 1000);
+                trackEvent('lesson_completed', {
+                    lesson_id: currentLesson,
+                    lesson_title: lesson.title,
+                    duration_seconds: lessonDuration
+                });
+                
                 stepIndicator.textContent = '🎉 クリア！次のレッスンに進もう！';
                 stepIndicator.style.background = '#d4edda';
                 stepIndicator.style.borderColor = '#28a745';
@@ -551,12 +631,24 @@ sum()はPythonの便利な組み込み関数です。`,
                 saveProgress();
                 createLessonMenu();
                 updateProgress();
+            } else {
+                // GA: コード実行失敗を追跡
+                trackEvent('code_failed', {
+                    lesson_id: currentLesson,
+                    lesson_title: lesson?.title
+                });
             }
         }
 
         function showHint() {
             const lesson = lessons.find(l => l.id === currentLesson);
             if (!lesson) return;
+            
+            // GA: ヒント使用を追跡
+            trackEvent('hint_used', {
+                lesson_id: currentLesson,
+                lesson_title: lesson.title
+            });
             
             modalBody.innerHTML = `
                 <h3>💡 ヒント</h3>
@@ -573,6 +665,12 @@ sum()はPythonの便利な組み込み関数です。`,
         function showAnswer() {
             const lesson = lessons.find(l => l.id === currentLesson);
             if (!lesson) return;
+            
+            // GA: 解答表示を追跡
+            trackEvent('answer_shown', {
+                lesson_id: currentLesson,
+                lesson_title: lesson.title
+            });
             
             modalBody.innerHTML = `
                 <h3>📖 完全な解答</h3>
@@ -595,6 +693,13 @@ sum()はPythonの便利な組み込み関数です。`,
             const completionRate = Math.round((completedLessons.size / lessons.length) * 100);
             progressBar.style.width = completionRate + '%';
             progressText.textContent = `進捗: ${completionRate}% (${completedLessons.size}/${lessons.length}レッスン完了)`;
+            
+            // GA: 進捗更新を追跡
+            trackEvent('progress_updated', {
+                completion_rate: completionRate,
+                completed_lessons: completedLessons.size,
+                total_lessons: lessons.length
+            });
         }
 
         function setupKeyboardShortcuts() {
@@ -606,21 +711,99 @@ sum()はPythonの便利な組み込み関数です。`,
                     this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
                     this.selectionStart = this.selectionEnd = start + 4;
                 }
+                
+                // GA: コードエディター操作を追跡
+                codeEditorInteractionCount++;
+                if (codeEditorInteractionCount % 10 === 0) { // 10回の操作毎に追跡
+                    trackEvent('code_editor_activity', {
+                        lesson_id: currentLesson,
+                        interaction_count: codeEditorInteractionCount,
+                        code_length: this.value.length
+                    });
+                }
+            });
+            
+            // コードエディターへの入力を追跡
+            codeEditor.addEventListener('input', function() {
+                trackUserInteraction('code_typing');
+            });
+            
+            // コードエディターのフォーカス/ブラー追跡
+            codeEditor.addEventListener('focus', function() {
+                trackUserInteraction('code_editor_focus');
             });
         }
 
         function setupEventListeners() {
-            runBtn.addEventListener('click', runCode);
-            hintBtn.addEventListener('click', showHint);
-            showAnswerBtn.addEventListener('click', showAnswer);
-            copyBtn.addEventListener('click', copyToClipboard);
-            previewBtn.addEventListener('click', showPreview);
-            modalClose.addEventListener('click', closeModal);
+            runBtn.addEventListener('click', () => {
+                trackUserInteraction('run_button_click');
+                runCode();
+            });
+            hintBtn.addEventListener('click', () => {
+                trackUserInteraction('hint_button_click');
+                showHint();
+            });
+            showAnswerBtn.addEventListener('click', () => {
+                trackUserInteraction('answer_button_click');
+                showAnswer();
+            });
+            copyBtn.addEventListener('click', () => {
+                trackUserInteraction('copy_button_click');
+                copyToClipboard();
+            });
+            previewBtn.addEventListener('click', () => {
+                trackUserInteraction('preview_button_click');
+                showPreview();
+            });
+            modalClose.addEventListener('click', () => {
+                trackUserInteraction('modal_close_click');
+                closeModal();
+            });
             
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
+                    trackUserInteraction('modal_backdrop_click');
                     closeModal();
                 }
+            });
+        }
+
+        // セッション開始時刻を記録
+        let sessionStartTime = Date.now();
+        let currentLessonStartTime = Date.now();
+        
+        // GA: セッション時間とページ離脱時の統計を追跡
+        function trackSessionData() {
+            const sessionDuration = Math.round((Date.now() - sessionStartTime) / 1000);
+            const currentLessonDuration = Math.round((Date.now() - currentLessonStartTime) / 1000);
+            
+            trackEvent('session_data', {
+                session_duration_seconds: sessionDuration,
+                current_lesson_duration_seconds: currentLessonDuration,
+                current_lesson_id: currentLesson,
+                completed_lessons_count: completedLessons.size,
+                completion_rate: Math.round((completedLessons.size / lessons.length) * 100)
+            });
+        }
+        
+        // ページ離脱時にセッションデータを送信
+        window.addEventListener('beforeunload', () => {
+            trackSessionData();
+        });
+        
+        // 定期的にセッションデータを送信（5分毎）
+        setInterval(trackSessionData, 5 * 60 * 1000);
+        
+        // ユーザーエンゲージメント追跡
+        let userInteractionCount = 0;
+        let codeEditorInteractionCount = 0;
+        
+        function trackUserInteraction(interactionType) {
+            userInteractionCount++;
+            trackEvent('user_interaction', {
+                interaction_type: interactionType,
+                total_interactions: userInteractionCount,
+                current_lesson: currentLesson
             });
         }
 
@@ -631,6 +814,14 @@ sum()はPythonの便利な組み込み関数です。`,
             setupEventListeners();
             setupKeyboardShortcuts();
             updateProgress();
+            
+            // GA: アプリ初期化を追跡
+            trackEvent('app_initialized', {
+                initial_lesson: currentLesson,
+                completed_lessons_count: completedLessons.size,
+                user_agent: navigator.userAgent,
+                screen_resolution: `${screen.width}x${screen.height}`
+            });
         }
 
         document.addEventListener('DOMContentLoaded', initApp);
